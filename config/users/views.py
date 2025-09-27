@@ -1,5 +1,8 @@
 from django.contrib import auth, messages
 from django.contrib.auth.tokens import default_token_generator
+from django.middleware.csrf import get_token
+from django.utils import timezone
+from inertia import render as inertia_render
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.http import urlsafe_base64_decode
@@ -77,6 +80,90 @@ class UserProfileView(View):
              'groups': groups}
         )
 
+
+class UserCabinetView(View):
+    def _build_base_props(self, request, user: User) -> dict:
+        registration_date = user.date_joined
+        last_visit = user.last_login if user.last_login else timezone.now()
+        total_hours = (last_visit - registration_date).total_seconds() / 3600
+        usage_stats = {
+            'registration_date': user.date_joined.strftime('%d.%m.%Y'),
+            'last_visit': user.last_login.strftime('%d.%m.%Y') if user.last_login else 'Никогда',
+            'total_time': f'{total_hours:.0f} часов',
+        }
+
+        return {
+            'user': {
+                'first_name': user.first_name,
+                'email': user.email,
+            },
+            'csrfToken': get_token(request),
+            'subscription': {
+                'plan': 'Pro',
+                'price': '$29',
+                'period': 'в месяц',
+                'channels_used': 47,
+                'channels_limit': 100,
+                'ai_requests_used': 234,
+                'ai_requests_limit': 1000,
+            },
+            'notifications': {
+                'weekly_reports': True,
+                'trend_notifications': True,
+                'limit_exceeded': False,
+                'new_features': True,
+            },
+            'usage_stats': usage_stats,
+        }
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.add_message(request,
+                                 messages.ERROR,
+                            'Вы не авторизованы! Пожалуйста, выполните вход.')
+            return redirect(reverse('users:login'))
+
+        user = request.user
+        props = self._build_base_props(request, user)
+        return inertia_render(request, 'UserProfile', props)
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.add_message(request,
+                                 messages.ERROR,
+                            'Вы не авторизованы! Пожалуйста, выполните вход.')
+            return redirect(reverse('users:login'))
+
+        user = request.user
+        action = request.POST.get('action')
+
+        if action == 'notifications':
+            # Уведомления сейчас заглушки
+            messages.add_message(request,
+                                 messages.SUCCESS,
+                                 'Настройки уведомлений сохранены')
+        else:
+            form = UserUpdateForm(data=request.POST, instance=user)
+            if form.is_valid():
+                try:
+                    form.save()
+                    messages.add_message(request,
+                                         messages.SUCCESS,
+                                         'Профиль успешно изменен')
+                except Exception as e:
+                    messages.add_message(request,
+                                         messages.ERROR,
+                                         f'Ошибка при сохранении: {str(e)}')
+                    return redirect(reverse('users:user_cabinet'))
+            else:
+                props = self._build_base_props(request, user)
+                props['errors'] = form.errors.get_json_data()
+                props['values'] = {
+                    'first_name': request.POST.get('first_name', ''),
+                    'email': request.POST.get('email', ''),
+                }
+                return inertia_render(request, 'UserProfile', props)
+
+        return redirect(reverse('users:user_cabinet'))
 
 class UserRegister(View):
     def post(self, request, *args, **kwargs):

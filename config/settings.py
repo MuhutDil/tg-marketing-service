@@ -85,6 +85,7 @@ INSTALLED_APPS = [
     'config.users',
     'config.group_channels',
     'config.parser',
+    'inertia',
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -110,6 +111,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'inertia.middleware.InertiaMiddleware',
 ]
 
 
@@ -232,3 +234,7 @@ else:
     # Email settings for development - emails will be printed to console
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
+# Inertia settings
+INERTIA_LAYOUT = 'base.html'
+CSRF_HEADER_NAME = 'HTTP_X_XSRF_TOKEN'
+CSRF_COOKIE_NAME = 'XSRF-TOKEN'
