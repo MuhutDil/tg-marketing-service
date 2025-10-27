@@ -85,6 +85,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.yandex',
     'config',
+    'config.homepage',
     'config.users',
     'config.group_channels',
     'config.parser',
@@ -246,3 +247,7 @@ STATICFILES_DIRS = [
     BASE_DIR / "frontend" / "public",
 ]
 
+# Inertia settings
+INERTIA_LAYOUT = 'base.html'
+CSRF_HEADER_NAME = 'HTTP_X_XSRF_TOKEN'
+CSRF_COOKIE_NAME = 'XSRF-TOKEN'
