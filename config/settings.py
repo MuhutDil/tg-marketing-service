@@ -88,6 +88,7 @@ INSTALLED_APPS = [
     'apps.users',
     'apps.group_channels',
     'apps.parser',
+    'apps.homepage',
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -97,10 +98,10 @@ AUTHENTICATION_BACKENDS = [
 
 SITE_ID = 1
 
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'optional'  # или 'mandatory'
-ACCOUNT_LOGIN_METHODS = {'email'}
-#ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_USERNAME_REQUIRED = False
 LOGIN_REDIRECT_URL = '/'  # Куда перенаправлять после входа
 
 MIDDLEWARE = [
@@ -246,3 +247,7 @@ STATICFILES_DIRS = [
     BASE_DIR / "frontend" / "public",
 ]
 
+# Inertia settings
+INERTIA_LAYOUT = 'base.html'
+CSRF_HEADER_NAME = 'HTTP_X_XSRF_TOKEN'
+CSRF_COOKIE_NAME = 'XSRF-TOKEN'

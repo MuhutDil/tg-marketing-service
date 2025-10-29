@@ -1,9 +1,12 @@
 from django.contrib import auth, messages
 from django.contrib.auth.tokens import default_token_generator
+from django.middleware.csrf import get_token
+from django.utils import timezone
+from inertia import render as inertia_render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.http import urlsafe_base64_decode
 from django.views.generic.base import View
-from inertia import InertiaResponse, inertia_redirect
 
 from apps.group_channels.forms import CreateGroupForm, UpdateGroupForm
 
@@ -24,32 +27,22 @@ class LogoutView(View):
             messages.add_message(request,
                                  messages.ERROR,
                             'Вы не авторизованы! Пожалуйста, выполните вход.')
-            return inertia_redirect(reverse('users:login'))
-        return inertia_redirect(reverse('main_index'))
+            return redirect(reverse('users:login'))
+        return redirect(reverse('main_index'))
 
     def post(self, request, *args, **kwargs):
         messages.add_message(request, messages.INFO, 'Вы разлогинены')
         auth.logout(request)
-        return inertia_redirect(reverse('main_index'))
+        return redirect(reverse('main_index'))
 
 
 class LoginView(View):
-    '''{
-    "component": "LoginPage",
-    "props": {
-    'form': {
-        "username": "Tomas",
-        "password": 12345,
-        },
-    },
-    "url": "auth/login/",
-}'''
     def get(self, request, *args, **kwargs):
         form = UserLoginForm()
-        return InertiaResponse(
+        return render(
             request,
-            component='LoginPage',
-            props={'form': form}
+            'login.html',
+            {'form': form}
         )
 
     def post(self, request, *args, **kwargs):
@@ -61,52 +54,26 @@ class LoginView(View):
             if user:
                 auth.login(request, user)
                 messages.add_message(request, messages.SUCCESS, 'Вы залогинены')
-                return inertia_redirect(reverse('main_index'))
-        return InertiaResponse(request,
-                               component='LoginPage',
-                               props={'form': form})
+                return redirect(reverse('main_index'))
+        return render(request, 'login.html', {'form': form})
 
 
 class UserProfileView(View):
-    '''{
-    "component": "ProfilePage",
-    "props": {
-        'form': {
-             'user': {
-                 'username': 'Tomas',
-                 'password': '12345',
-                 },
-             'create_form': {
-                            'name': 'group',
-                            'description': 'description',
-                            'image_url': 'https://example.com/image.jpg',
-                            },
-             'update_form': {'name': 'group',
-                            'description': 'description',
-                            'image_url': 'https://example.com/image.jpg',
-                            },
-             'avatar_form': {'avatar': 'https://example.com/new_image.jpg'},
-             'groups': [...]},
-        },
-    },
-    "url": "auth/me/",
-}'''
     def get(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             messages.add_message(request,
                                  messages.ERROR,
                             'Вы не авторизованы! Пожалуйста, выполните вход.')
-            return inertia_redirect(reverse('users:login'))
+            return redirect(reverse('users:login'))
         create_form = CreateGroupForm()
         update_form = UpdateGroupForm()
         avatar_form = AvatarChange()
         user = request.user
         groups = user.owned_groups.all()
-        return InertiaResponse(
+        return render(
             request,
-            component='ProfilePage',
-            props={
-             'user': user,
+            'users/profile.html',
+            {'user': user,
              'create_form': create_form,
              'update_form': update_form,
              'avatar_form': avatar_form,
@@ -114,23 +81,91 @@ class UserProfileView(View):
         )
 
 
-class UserRegister(View):
-    '''{
-    'component': 'RegisterPage',
-    'props': {
-        'form': {
-            'first_name': 'John',
-            'last_name': 'Punch',
-            'username': 'Tomas',
-            'password1': '12345',
-            'password2': '12345',
-            'email': 'example@example.com',
-            'bio': 'chill guy',
-            'avatar_image': 'https://example.com/image.jpg',
+class UserCabinetView(View):
+    def _build_base_props(self, request, user: User) -> dict:
+        registration_date = user.date_joined
+        last_visit = user.last_login if user.last_login else timezone.now()
+        total_hours = (last_visit - registration_date).total_seconds() / 3600
+        usage_stats = {
+            'registration_date': user.date_joined.strftime('%d.%m.%Y'),
+            'last_visit': user.last_login.strftime('%d.%m.%Y') if user.last_login else 'Никогда',
+            'total_time': f'{total_hours:.0f} часов',
+        }
+
+        return {
+            'user': {
+                'first_name': user.first_name,
+                'email': user.email,
             },
-        },
-    "url": "auth/create/",
-}'''
+            'csrfToken': get_token(request),
+            'subscription': {
+                'plan': 'Pro',
+                'price': '$29',
+                'period': 'в месяц',
+                'channels_used': 47,
+                'channels_limit': 100,
+                'ai_requests_used': 234,
+                'ai_requests_limit': 1000,
+            },
+            'notifications': {
+                'weekly_reports': True,
+                'trend_notifications': True,
+                'limit_exceeded': False,
+                'new_features': True,
+            },
+            'usage_stats': usage_stats,
+        }
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.add_message(request,
+                                 messages.ERROR,
+                            'Вы не авторизованы! Пожалуйста, выполните вход.')
+            return redirect(reverse('users:login'))
+
+        user = request.user
+        props = self._build_base_props(request, user)
+        return inertia_render(request, 'UserProfile', props)
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.add_message(request,
+                                 messages.ERROR,
+                            'Вы не авторизованы! Пожалуйста, выполните вход.')
+            return redirect(reverse('users:login'))
+
+        user = request.user
+        action = request.POST.get('action')
+
+        if action == 'notifications':
+            # Уведомления сейчас заглушки
+            messages.add_message(request,
+                                 messages.SUCCESS,
+                                 'Настройки уведомлений сохранены')
+        else:
+            form = UserUpdateForm(data=request.POST, instance=user)
+            if form.is_valid():
+                try:
+                    form.save()
+                    messages.add_message(request,
+                                         messages.SUCCESS,
+                                         'Профиль успешно изменен')
+                except Exception as e:
+                    messages.add_message(request,
+                                         messages.ERROR,
+                                         f'Ошибка при сохранении: {str(e)}')
+                    return redirect(reverse('users:user_cabinet'))
+            else:
+                props = self._build_base_props(request, user)
+                props['errors'] = form.errors.get_json_data()
+                props['values'] = {
+                    'first_name': request.POST.get('first_name', ''),
+                    'email': request.POST.get('email', ''),
+                }
+                return inertia_render(request, 'UserProfile', props)
+
+        return redirect(reverse('users:user_cabinet'))
+
+class UserRegister(View):
     def post(self, request, *args, **kwargs):
         form = UserRegForm(data=request.POST)
         if form.is_valid():
@@ -205,41 +240,25 @@ rK3p1E6Fc9XhpNRPhra9i9jUSSr4XI6zeI6povWGv3iMqqWLA56gbCOM1NMMeUcW67B5lB\
             messages.add_message(request,
                                  messages.SUCCESS,
                                  'Пользователь успешно зарегистрирован')
-            return inertia_redirect(reverse('users:login'))
-        return InertiaResponse(request,
-                               component='RegisterPage',
-                               props={'form': form})
+            return redirect(reverse('users:login'))
+        return render(request, 'users/register.html', {'form': form})
 
     def get(self, request, *args, **kwargs):
         form = UserRegForm()
-        return InertiaResponse(
+        return render(
             request,
-            component='RegisterPage',
-            props={'form': form}
+            'users/register.html',
+            {'form': form}
         )
 
 
 class UserUpdate(View):
-    '''{
-    "component": "UpdatePage",
-    "props": {
-        'form': {
-            'username': 'new_username',
-            'first_name': 'new_first_name',
-            'last_name': 'new_last_name',
-            'avatar_image': 'https://example.com/new_image.jpg',
-            'email': 'new_email.example.com',
-            'bio': 'new_bio',
-        },
-    },
-    "url": "auth/<slug:username>/update/",
-}'''
     def get(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             messages.add_message(request,
                                  messages.ERROR,
-                                 'Вы не авторизованы! Пожалуйста, выполните вход.')
-            return inertia_redirect(reverse('users:login'))
+                            'Вы не авторизованы! Пожалуйста, выполните вход.')
+            return redirect(reverse('users:login'))
         if request.user.username == kwargs.get('username'):
             form = UserUpdateForm(initial={
                 'username': request.user.username,
@@ -249,19 +268,18 @@ class UserUpdate(View):
                 'email': request.user.email,
                 'bio': request.user.bio,
             })
-            return InertiaResponse(
+            return render(
                 request,
-                component='UpdatePage',
-                props={
-                 'form': form,
+                'users/update.html',
+                {'form': form,
                  'username': request.user.username,
                  'user': request.user,
                 }
             )
         messages.add_message(request,
                              messages.ERROR,
-                             'У вас нет прав для изменения другого пользователя.')
-        return inertia_redirect(reverse('users:profile'))
+                        'У вас нет прав для изменения другого пользователя.')
+        return redirect(reverse('users:profile'))
 
     def post(self, request, *args, **kwargs):
         username = kwargs.get('username')
@@ -272,11 +290,11 @@ class UserUpdate(View):
             messages.add_message(request,
                                  messages.SUCCESS,
                                  'Профиль успешно изменен')
-            return inertia_redirect(reverse('users:profile'))
-        return InertiaResponse(
+            return redirect(reverse('users:profile'))
+        return render(
             request,
-            component='UpdatePage',
-            props={'form': form}
+            'users/update.html',
+            {'form': form}
         )
 
 
@@ -290,31 +308,22 @@ class AvatarChangeView(View):
             messages.add_message(request,
                                  messages.SUCCESS,
                                  'Аватар успешно изменен')
-            return inertia_redirect(reverse('users:profile'))
+            return redirect(reverse('users:profile'))
         if avatar_form.errors.get('avatar_url'):
             avatar_url = avatar_form.errors.get('avatar_url').as_text()
             messages.add_message(request,
                                  messages.ERROR,
                                  avatar_url[1:])
-        return inertia_redirect(reverse('users:profile'))
+        return redirect(reverse('users:profile'))
 
 
 class RestorePasswordRequestView(View):
-    '''{
-    "component": "RestorePasswordPequestPage",
-    "props": {
-        'form': {
-        'email': 'new_example.example.com',
-    },
-    },
-    "url": "auth/restore-password/",
-}'''
     def get(self, request, *args, **kwargs):
         form = RestorePasswordRequestForm()
-        return InertiaResponse(
+        return render(
             request,
-            component='RestorePasswordPequestPage',
-            props={'form': form}
+            'users/restore-password-request.html',
+            {'form': form}
         )
 
     def post(self, request, *args, **kwargs):
@@ -323,36 +332,25 @@ class RestorePasswordRequestView(View):
             form.save(request=request,
                       use_https=request.is_secure(),
                       email_template_name='emails/restore-password-email.html',
-                      )
+            )
             messages.add_message(request,
                                  messages.SUCCESS,
                                  'Ссылка на восстановление пароля \
                                     отправлена на указанный вами Email'
-                                 )
-            return inertia_redirect('users:login')  # redirect already uses reverse
+            )
+            return redirect('users:login')  # redirect already uses reverse
+        
         messages.add_message(request,
                              messages.ERROR,
                              'Пожалуйста, введите корректный Email'
         )
-        return InertiaResponse(request,
-                      component='RestorePasswordPequestPage',
-                      props={'form': form}
+        return render(request,
+                      'users/restore-password-request.html',
+                      {'form': form}
         )
 
 
 class RestorePasswordView(View):
-    '''{
-    "component": "RestorePasswordPage",
-    "props": {
-        'form': {
-        'new_password': '54321',
-        'new_password': '54321',
-        },
-        'uid': 'uidb64',
-        'token': 'abc123...'
-    },
-    "url": "auth/restore-password/<uidb64>/<token>/",
-}'''
     def get(self, request, *args, **kwargs):
         try:
             uid = kwargs['uidb64']
@@ -367,7 +365,7 @@ class RestorePasswordView(View):
             messages.add_message(request,
                                  messages.ERROR,
                                  'Некорректная ссылка для восстановления пароля')
-            return inertia_redirect('users:login')
+            return redirect('users:login')
 
         try:
             uid_decoded = urlsafe_base64_decode(uid).decode()
@@ -375,27 +373,26 @@ class RestorePasswordView(View):
             messages.add_message(request,
                                  messages.ERROR,
                                  'Некорректный id пользователя')
-            return inertia_redirect('users:login')
+            return redirect('users:login')
         try:
             user = User.objects.get(pk=uid_decoded)
         except User.DoesNotExist:
             messages.add_message(request,
                                  messages.ERROR,
                                  'Пользователь не найден')
-            return inertia_redirect('users:login')
+            return redirect('users:login')
 
         if not default_token_generator.check_token(user, token):
             messages.add_message(request,
                                  messages.ERROR,
                                  'Некорректная ссылка для восстановления пароля')
-            return inertia_redirect('users:login')
+            return redirect('users:login')
 
         form = RestorePasswordForm(user=user)
-        return InertiaResponse(
+        return render(
             request,
-            component='RestorePasswordPage',
-            props={
-             'form': form,
+            'users/restore-password.html',
+            {'form': form,
              'uid': uid,
              'token': token,
             }
@@ -415,7 +412,7 @@ class RestorePasswordView(View):
             messages.add_message(request,
                                  messages.ERROR,
                                  'Некорректная ссылка для восстановления пароля')
-            return inertia_redirect('users:login')
+            return redirect('users:login')
 
         try:
             uid_decoded = urlsafe_base64_decode(uid).decode()
@@ -423,20 +420,20 @@ class RestorePasswordView(View):
             messages.add_message(request,
                                  messages.ERROR,
                                  'Некорректный id пользователя')
-            return inertia_redirect('users:login')
+            return redirect('users:login')
         try:
             user = User.objects.get(pk=uid_decoded)
         except User.DoesNotExist:
             messages.add_message(request,
                                  messages.ERROR,
                                  'Пользователь не найден')
-            return inertia_redirect('users:login')
+            return redirect('users:login')
 
         if not default_token_generator.check_token(user, token):
             messages.add_message(request,
                                  messages.ERROR,
                                  'Некорректная ссылка для восстановления пароля')
-            return inertia_redirect('users:login')
+            return redirect('users:login')
 
         form = RestorePasswordForm(user=user, data=request.POST)
         if form.is_valid():
@@ -444,13 +441,12 @@ class RestorePasswordView(View):
             messages.add_message(request,
                                  messages.SUCCESS,
                                  'Пароль успешно изменен')
-            return inertia_redirect('users:login')
+            return redirect('users:login')
 
-        return InertiaResponse(
+        return render(
             request,
-            component='RestoreRasswordPage',
-            props={
-             'form': form,
+            'users/restore-password.html',
+            {'form': form,
              'uid': uid,
              'token': token,
             }
