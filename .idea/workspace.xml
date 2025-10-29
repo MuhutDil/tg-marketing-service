@@ -6,7 +6,17 @@
   <component name="ChangeListManager">
     <list default="true" id="1bb037bb-6c23-43fc-beb2-260f7edbf615" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/group_channels/migrations/0001_initial.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/group_channels/migrations/0001_initial.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/group_channels/migrations/0002_auto_20251008_0259.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/group_channels/migrations/0002_initial.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/group_channels/migrations/0003_initial.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/group_channels/migrations/0004_autogrouprule.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/homepage/apps.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/homepage/apps.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/parser/migrations/0001_initial.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/parser/migrations/0002_initial.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/parser/migrations/0003_alter_telegramchannel_category.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/parser/migrations/0003_channelmoderator.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/parser/migrations/0004_channelmoderator_user_and_more.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/config/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/config/settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/config/urls.py" afterDir="false" />
     </list>
@@ -41,32 +51,37 @@
   &quot;associatedIndex&quot;: 2
 }</component>
   <component name="ProjectId" id="2x33JgVn8NZ80o2SviUITeRbtm3" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="1" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Python.get_session_qr.executor&quot;: &quot;Run&quot;,
-    &quot;Python.telegram_string.executor&quot;: &quot;Run&quot;,
-    &quot;Python.views.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;issues__106&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/macbook/PycharmProjects/hexlet-price-tracker/config/parser&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.get_session_qr.executor": "Run",
+    "Python.telegram_string.executor": "Run",
+    "Python.views.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "/Users/macbook/PycharmProjects/hexlet-price-tracker/config/parser",
+    "settings.editor.selected.configurable": "preferences.fileTypes"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;stardust.markdown.MarkdownSplitEditorSuppressor:keyList&quot;: []
+  "keyToStringList": {
+    "stardust.markdown.MarkdownSplitEditorSuppressor:keyList": []
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/config/parser" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/apps/homepage/migrations" />
+      <recent name="$PROJECT_DIR$/apps/homepage" />
       <recent name="$PROJECT_DIR$/config" />
       <recent name="$PROJECT_DIR$" />
     </key>
