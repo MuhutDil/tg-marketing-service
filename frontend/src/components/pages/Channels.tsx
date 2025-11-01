@@ -17,11 +17,9 @@ import {
   countChannelsByCategory,
   mapCategoryCountEntry,
 } from '@/utils/reduceChannels.ts';
-import channelsCol from '@/fixtures/channelsCollection.ts';
+// import channels from '../../../fixtures/channelsCollection.ts';
 
-const defaultChannels = channelsCol;
-
-const Channels: React.FC<ChannelsProps> = ({ channels = defaultChannels }) => {
+const Channels: React.FC<ChannelsProps> = ({ channels }) => {
   const isMobile = useMediaQuery({ maxWidth: 767 });
   const isTablet = useMediaQuery({ minWidth: 768, maxWidth: 1023 });
   const countries: string[] = [

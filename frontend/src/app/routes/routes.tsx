@@ -7,7 +7,7 @@ import MassParsing from '@/components/pages/MassParsing';
 import Auth from '@/components/pages/Auth';
 import { UserProfilePage } from '@/pages/UserProfilePage/ui/UserProfilePage';
 import Channels from '@/components/pages/Channels';
-import channelsCol from '@/fixtures/channelsCollection';
+// import channelsCol from '@/fixtures/channelsCollection';
 
 
 const routes = [
@@ -17,7 +17,7 @@ const routes = [
   { path: '/mass-parsing', element: <MassParsing /> },
   { path: '/auth', element: <Auth /> },
   { path: '/profile', element: <UserProfilePage /> },
-  { path: '/channels', element: <Channels channels={channelsCol} /> },
+  // { path: '/channels', element: <Channels channels={channelsCol} /> },
 ];
 
 export const renderRoutes = (): React.ReactNode => {
